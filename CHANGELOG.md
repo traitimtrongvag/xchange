@@ -18,6 +18,8 @@ Upcoming feature release, possibly around 1 August 2026.
  - Fixed memleak in `xLookupRemove()`.
  
  - Fixed memleak in `xDestroyLookup()`.
+ 
+ - `xLookupPut()` did not return `X_NO_INIT` as expected if lookup table was not initialized.
 
  - Fix potential buffer overflow at build time in `docedit.c` (`sprintf()` to `snprintf()`).
 

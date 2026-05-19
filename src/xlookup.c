@@ -158,7 +158,7 @@ int xLookupPut(XLookupTable *tab, const char *prefix, const XField *field, XFiel
   if(!field) return x_error(X_NULL, EINVAL, fn, "input field is NULL");
 
   p = (XLookupPrivate *) tab->priv;
-  if(!p) return x_error(0, EINVAL, fn, "lookup table not initialized");
+  if(!p) return x_error(X_NO_INIT, EINVAL, fn, "lookup table not initialized");
 
   xmut_lock(&p->mutex);
   res = xLookupPutAsync(tab, prefix, field, oldValue);
@@ -302,7 +302,7 @@ int xLookupPutAll(XLookupTable *tab, const char *prefix, const XStructure *s, bo
   if(!s) return x_error(X_NULL, EINVAL, fn, "input structure is NULL");
 
   p = (XLookupPrivate *) tab->priv;
-  if(!p) return x_error(0, EINVAL, fn, "lookup table not initialized");
+  if(!p) return x_error(X_NO_INIT, EINVAL, fn, "lookup table not initialized");
 
   xmut_lock(&p->mutex);
   n = xLookupPutAllAsync(tab, prefix, s, recursive);
@@ -337,7 +337,7 @@ int xLookupRemoveAll(XLookupTable *tab, const char *prefix, const XStructure *s,
   if(!s) return x_error(X_NULL, EINVAL, fn, "input structure is NULL");
 
   p = (XLookupPrivate *) tab->priv;
-  if(!p) return x_error(0, EINVAL, fn, "lookup table not initialized");
+  if(!p) return x_error(X_NO_INIT, EINVAL, fn, "lookup table not initialized");
 
   xmut_lock(&p->mutex);
   n = xLookupRemoveAllAsync(tab, prefix, s, recursive);
