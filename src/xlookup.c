@@ -286,7 +286,7 @@ static int xLookupRemoveAllAsync(XLookupTable *tab, const char *prefix, const XS
  * @param prefix      The aggregate ID prefix before the field's name, not including a separator
  * @param s           The structure
  * @param recursive   Whether to include fields in all substructures recursively also.
- * @return            the number of fields added (&lt;=0), or else X_NULL if either of the arguments were NULL,
+ * @return            the number of fields added (&gt;=0), or else X_NULL if either of the arguments were NULL,
  *                    or X_NO_INIT if the table was not initialized, or else X_FAILURE if some other error.
  *
  * @sa xLookupRemoveAll()
@@ -321,7 +321,7 @@ int xLookupPutAll(XLookupTable *tab, const char *prefix, const XStructure *s, bo
  * @param prefix      The aggregate ID prefix before the field's name, not including a separator
  * @param s           The structure
  * @param recursive   Whether to include fields in all substructures recursively also.
- * @return            the number of fields removed (&lt;=0), or else X_NULL if either of the arguments were NULL,
+ * @return            the number of fields removed (&gt;=0), or else X_NULL if either of the arguments were NULL,
  *                    or X_NO_INIT if the table was not initialized, or else X_FAILURE if some other error.
  *
  * @sa xLookupRemoveAll()
@@ -477,7 +477,7 @@ XField *xLookupField(const XLookupTable *tab, const char *id) {
 
 
 /**
- * Destroys a lookup table, freeing up it's in-memory resources. Depending on the option
+ * Destroys a lookup table, freeing up its in-memory resources. Depending on the option
  * argument, the fields referenced by the lookup table may also be destroyed, or else
  * left to remain, in case they are referenced externally also.
  *
