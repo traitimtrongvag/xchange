@@ -34,18 +34,19 @@ typedef struct {
 
 /// \endcond
 
-static long xGetHash(const char *str) {
+static unsigned long xGetHash(const char *str) {
   int i;
   unsigned long long hash = 1469598103934665603ULL;  /* FNV-1a 64-bit offset basis */
+
   if(!str) return 0;
   for(i=0; str[i]; i++) {
     hash ^= (unsigned char) str[i];
     hash *= 1099511628211ULL;                        /* FNV-1a 64-bit prime */
   }
-  return hash;
+  return (unsigned long) hash;
 }
 
-static XLookupEntry *xGetLookupEntryAsync(const XLookupTable *tab, const char *key, long hash) {
+static XLookupEntry *xGetLookupEntryAsync(const XLookupTable *tab, const char *key, unsigned long hash) {
   const XLookupPrivate *p;
   XLookupEntry *e;
 
@@ -55,7 +56,7 @@ static XLookupEntry *xGetLookupEntryAsync(const XLookupTable *tab, const char *k
     return NULL;
   }
 
-  for(e = p->table[(int) (hash % p->nBins)]; e != NULL; e=e->next) if(strcmp(e->key, key) == 0) return e;
+  for(e = p->table[(int) (hash % p->nBins)]; e != NULL; e = e->next) if(strcmp(e->key, key) == 0) return e;
 
   return NULL;
 }
@@ -63,7 +64,7 @@ static XLookupEntry *xGetLookupEntryAsync(const XLookupTable *tab, const char *k
 static int xLookupPutAsync(XLookupTable *tab, const char *prefix, const XField *field, XField **oldValue) {
   XLookupPrivate *p = (XLookupPrivate *) tab->priv;
   const char *id = prefix ? xGetAggregateID(prefix, field->name) : xStringCopyOf(field->name);
-  long hash = xGetHash(id);
+  unsigned long hash = xGetHash(id);
   XLookupEntry *e = xGetLookupEntryAsync(tab, id, hash);
   int idx;
 
@@ -93,7 +94,7 @@ static int xLookupPutAsync(XLookupTable *tab, const char *prefix, const XField *
 static XField *xLookupRemoveAsync(XLookupTable *tab, const char *id) {
   XLookupPrivate *p = (XLookupPrivate *) tab->priv;
   XLookupEntry *e, *last = NULL;
-  long hash = xGetHash(id);
+  unsigned long hash = xGetHash(id);
   int idx = (int) (hash % p->nBins);
 
   for(e = p->table[idx]; e != NULL; e=e->next) {
