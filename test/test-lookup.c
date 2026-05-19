@@ -61,7 +61,7 @@ int main() {
     fprintf(stderr, "ERROR! remove other\n");
     return 1;
   }
-  xDestroyLookupAndData(l);
+  xDestroyLookup(l);
 
   l = xAllocLookup(16);
   status = xLookupPutAll(l, NULL, s, TRUE);
