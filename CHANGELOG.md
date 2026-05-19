@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 Upcoming feature release, possibly around 1 August 2026.
 
+### Fixed
+
+ - Fix potential buffer overflow at build time in `docedit.c` (`sprintf()` to `snprintf()`).
+
 ### Added
 
  - Now installing `xmutex.h` containing portable mutex macros.
