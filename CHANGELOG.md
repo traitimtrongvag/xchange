@@ -22,6 +22,8 @@ Upcoming feature release, possibly around 1 August 2026.
  - `xLookupPut()` did not return `X_NO_INIT` as expected if lookup table was not initialized.
 
  - Fix potential buffer overflow at build time in `docedit.c` (`sprintf()` to `snprintf()`).
+ 
+ - Fixed max string size for 8-byte signed integer (-> 20 bytes + termination).
 
 ### Added
 

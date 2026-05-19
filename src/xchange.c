@@ -224,7 +224,7 @@ static int xStringSizeForIntBytes(int bytes) {
     case 1: return 4;   // -128
     case 2: return 6;   // -32768
     case 4: return 11;  // -2147483647
-    case 8: return 19;  // -9223372036854775807
+    case 8: return 20;  // -9223372036854775807
     default: return x_error(-1, EINVAL, "xStringSizeForIntBytes", "invalid bytes: %d", bytes);
   }
 }
