@@ -16,6 +16,8 @@ Upcoming feature release, possibly around 1 August 2026.
  - #26: Fixed space allocation in in `xLookupPutAllAsync()` / `xLookupRemoveAllAsync()`.
  
  - Fixed memleak in `xLookupRemove()`.
+ 
+ - Fixed memleak in `xDestroyLookup()`.
 
  - Fix potential buffer overflow at build time in `docedit.c` (`sprintf()` to `snprintf()`).
 
@@ -24,6 +26,8 @@ Upcoming feature release, possibly around 1 August 2026.
  - Now installing `xmutex.h` containing portable mutex macros.
 
 ### Changed
+
+ - Changed `xlookup` hash algorithm to FNV-1a.
 
  - CMake install to skip `.gitignore` in `examples/`.
  

@@ -36,9 +36,12 @@ typedef struct {
 
 static long xGetHash(const char *str) {
   int i;
-  long hash = 0;
+  unsigned long long hash = 1469598103934665603ULL;  /* FNV-1a 64-bit offset basis */
   if(!str) return 0;
-  for(i=0; str[i]; i++) hash += str[i] ^ i;
+  for(i=0; str[i]; i++) {
+    hash ^= (unsigned char) str[i];
+    hash *= 1099511628211ULL;                        /* FNV-1a 64-bit prime */
+  }
   return hash;
 }
 
@@ -122,7 +125,7 @@ static XField *xLookupRemoveAsync(XLookupTable *tab, const char *id) {
 long xLookupCount(const XLookupTable *tab) {
   const XLookupPrivate *p;
 
-  if(!tab) return 0;
+  if(!tab || !tab->priv) return 0;
   p = (XLookupPrivate *) tab->priv;
   return p->nEntries;
 }
@@ -514,6 +517,7 @@ static void xDestroyLookupOption(XLookupTable *tab, boolean destroyFields) {
   p->nEntries = 0;
   p->nBins = 0;
 
+  free(p);
   free(tab);
 }
 
