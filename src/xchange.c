@@ -50,7 +50,7 @@ boolean xDebug = FALSE;
  * @return        n
  */
 int x_trace(const char *loc, const char *op, int n) {
-  if(n < 0 && xDebug) {
+  if(xDebug && n < 0) {
     fprintf(stderr, "       @ %s", loc);
     if(op) fprintf(stderr, " [%s]", op);
     fprintf(stderr, " [=> %d]\n", n);
@@ -182,13 +182,13 @@ boolean xIsCharSequence(XType type) {
 boolean xIsInteger(XType type) {
   switch(type) {
     case X_BOOLEAN:
-      case X_BYTE:
-      case X_INT16:
-      case X_INT32:
-      case X_INT64:
-        return TRUE;
-      default:
-        return FALSE;
+    case X_BYTE:
+    case X_INT16:
+    case X_INT32:
+    case X_INT64:
+      return TRUE;
+    default:
+      return FALSE;
   }
 }
 
@@ -225,7 +225,7 @@ static int xStringSizeForIntBytes(int bytes) {
     case 2: return 6;   // -32768
     case 4: return 11;  // -2147483647
     case 8: return 19;  // -9223372036854775807
-    default : return x_error(-1, EINVAL, "xStringSizeForIntBytes", "invalid bytes: %d", bytes);
+    default: return x_error(-1, EINVAL, "xStringSizeForIntBytes", "invalid bytes: %d", bytes);
   }
 }
 
@@ -304,17 +304,20 @@ char xTypeChar(XType type) {
  * \param ndim      Number of dimensions
  * \param sizes     Sizes along each dimension.
  *
- * \return          Total element count specified by the dimensions. Defaults to 1.
+ * \return          Total element count specified by the dimensions. It defaults to 0.
  */
 long xGetElementCount(int ndim, const int *sizes) {
   int i;
   long N = 1L;
 
   if(ndim > 0 && !sizes)
-    return x_error(1, EINVAL, "xGetElementCount", "input 'sizes' is NULL (ndim = %d)", ndim);
+    return x_error(0, EINVAL, "xGetElementCount", "input 'sizes' is NULL (ndim = %d)", ndim);
 
   if(ndim > X_MAX_DIMS) ndim = X_MAX_DIMS;
-  for(i = 0; i < ndim; i++) N *= sizes[i];
+  for(i = 0; i < ndim; i++) {
+    if(sizes[i] <= 0) return 0;
+    N *= sizes[i];
+  }
   return N;
 }
 
@@ -344,7 +347,7 @@ int xPrintDims(char *dst, int ndim, const int *sizes) {
   if(ndim <= 0) return sprintf(dst, "1");           // default, will be overwritten with actual sizes, if any.
   else if(ndim > X_MAX_DIMS) ndim = X_MAX_DIMS;
 
-  for(i=0; i<ndim; i++) next += sprintf(next, "%d ", sizes[i]);       // Print the next dimension
+  for(i = 0; i < ndim; i++) next += sprintf(next, "%d ", sizes[i]);       // Print the next dimension
 
   if(next > dst) next--;
   *next = '\0';    // Replace the last space with a string termination.
@@ -370,7 +373,7 @@ int xParseDims(const char *src, int *sizes) {
   if(!src) return x_error(0, EINVAL, fn, "'src' is NULL");
   if(!sizes) return 0;
 
-  for(ndim = 0; ndim <= X_MAX_DIMS; ) {
+  for(ndim = 0; ndim < X_MAX_DIMS; ) {
     char *from = next;
 
     errno = 0;
@@ -457,13 +460,12 @@ char *xStringCopyOf(const char *str) {
   return copy;
 }
 
-static int TokenMatch(char *a, char *b) {
+static int TokenMatch(const char *a, const char *b) {
   // Check characters...
   for(; *a && *b; a++, b++) if(*a != *b) {
     if(isspace(*a)) return isspace(*b);
-    else if(isspace(*b)) return FALSE;
-    if(*a >= 'a' && *a <= 'z') if(toupper(*a) != *b) return FALSE;
-    if(*b >= 'a' && *b <= 'z') if(toupper(*b) != *a) return FALSE;
+    if(isspace(*b)) return FALSE;
+    if(toupper(*a) != toupper(*b)) return FALSE;
   }
   return *a == *b;
 }
@@ -478,7 +480,7 @@ static int TokenMatch(char *a, char *b) {
  * @param end   Where the pointer to after the successfully parsed token is returned, on NULL.
  * @return      TRUE (1) or FALSE (0).
  */
-boolean xParseBoolean(char *str, char **end) {
+boolean xParseBoolean(const char *str, char **end) {
   static const char *fn = "xParseBoolean";
 
   static char *trues[] = { "true", "t", "on", "yes", "y", "enabled", "active", NULL };
@@ -494,15 +496,15 @@ boolean xParseBoolean(char *str, char **end) {
 
   while(isspace(*str)) str++;
 
-  if(end) *end = str;
+  if(end) *end = (char *) str;
 
   for(i = 0; trues[i]; i++) if(TokenMatch(str, trues[i])) {
-    if(end) *end = str + strlen(trues[i]);
+    if(end) *end = (char *) str + strlen(trues[i]);
     return TRUE;
   }
 
   for(i = 0; falses[i]; i++) if(TokenMatch(str, falses[i])) {
-    if(end) *end = str + strlen(falses[i]);
+    if(end) *end = (char *) str + strlen(falses[i]);
     return FALSE;
   }
 
@@ -556,6 +558,7 @@ static int CompareToken(const char *a, const char *b) {
  */
 double xParseDouble(const char *str, char **tail) {
   if(!str) {
+    if(tail) *tail = NULL;
     x_error(0, EINVAL, "xParseDouble", "input string is NULL");
     return NAN;
   }
@@ -577,7 +580,8 @@ double xParseDouble(const char *str, char **tail) {
     if(*next) if((*next < '0' || *next > '9') && *next != '.') {
       if(!CompareToken("nan", next)) {
         if(tail) *tail = next + sizeof("nan") - 1;
-        return NAN;
+        // cppcheck-suppress nanInArithmeticExpression
+        return sign > 0 ? NAN : -NAN;
       }
       if(!CompareToken("inf", next)) {
         if(tail) *tail = next + sizeof("inf") - 1;
@@ -623,6 +627,7 @@ double xParseDouble(const char *str, char **tail) {
  */
 float xParseFloat(const char *str, char **tail) {
   if(!str) {
+    if(tail) *tail = NULL;
     x_error(0, EINVAL, "xParseFloat", "input string is NULL");
     return (float) NAN;
   }

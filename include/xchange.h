@@ -304,7 +304,7 @@ XField *xCreateMixed1DField(const char *name, int size, XField *value);
 int xSetSubtype(XField *f, const char *type);
 
 // Parsers / formatters
-boolean xParseBoolean(char *str, char **end);
+boolean xParseBoolean(const char *str, char **end);
 float xParseFloat(const char *str, char **tail);
 double xParseDouble(const char *str, char **tail);
 int xPrintDouble(char *str, double value);
