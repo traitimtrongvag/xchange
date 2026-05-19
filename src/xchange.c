@@ -123,7 +123,6 @@ int x_warn(const char *from, const char *desc, ...) {
   return 0;
 }
 
-
 /**
  * Checks if verbosity is enabled for the xchange library.
  *
@@ -225,7 +224,7 @@ static int xStringSizeForIntBytes(int bytes) {
     case 1: return 4;   // -128
     case 2: return 6;   // -32768
     case 4: return 11;  // -2147483647
-    case 8: return 19;  // −9223372036854775807
+    case 8: return 19;  // -9223372036854775807
     default : return x_error(-1, EINVAL, "xStringSizeForIntBytes", "invalid bytes: %d", bytes);
   }
 }
@@ -289,7 +288,7 @@ int xElementSizeOf(XType type) {
  * specification), and for all other
  * types it returns the constant XType value itself.
  *
- * @param type    The single-character IF of the field type.
+ * @param type    The single-character ID of the field type.
  * @return        A character that represented the type.
  */
 char xTypeChar(XType type) {
@@ -333,7 +332,7 @@ long xGetElementCount(int ndim, const int *sizes) {
 int xPrintDims(char *dst, int ndim, const int *sizes) {
   static const char *fn = "xPrintDims";
 
-  int i, N=0;
+  int i;
   char *next = dst;
 
   if(!dst)
@@ -345,17 +344,13 @@ int xPrintDims(char *dst, int ndim, const int *sizes) {
   if(ndim <= 0) return sprintf(dst, "1");           // default, will be overwritten with actual sizes, if any.
   else if(ndim > X_MAX_DIMS) ndim = X_MAX_DIMS;
 
-  for(i=0; i<ndim; i++) {
-    if(sizes[i] <= 0) continue;                     // Ignore 0 or negative dimensions
-    next += sprintf(next, "%d ", sizes[N++]);       // Print the next dimension
-  }
+  for(i=0; i<ndim; i++) next += sprintf(next, "%d ", sizes[i]);       // Print the next dimension
 
   if(next > dst) next--;
   *next = '\0';    // Replace the last space with a string termination.
 
   return next - dst;
 }
-
 
 /**
  * Deserializes the sizes from a space-separated list of dimensions. The parsing will terminate at the first non integer
@@ -394,7 +389,6 @@ int xParseDims(const char *src, int *sizes) {
 
   return ndim;
 }
-
 
 /**
  * Allocates a buffer for a given SMA-X type and element count. The buffer is initialized
@@ -488,7 +482,7 @@ boolean xParseBoolean(char *str, char **end) {
   static const char *fn = "xParseBoolean";
 
   static char *trues[] = { "true", "t", "on", "yes", "y", "enabled", "active", NULL };
-  static char *falses[] = { "false", "f", "off", "no", "n", "disabled", "invactive", NULL };
+  static char *falses[] = { "false", "f", "off", "no", "n", "disabled", "inactive", NULL };
 
   int i;
   long l;
@@ -519,7 +513,6 @@ boolean xParseBoolean(char *str, char **end) {
 
   return (l != 0);
 }
-
 
 #if EXPLICIT_PARSE_SPECIAL_DOUBLES
 static int CompareToken(const char *a, const char *b) {
@@ -662,12 +655,12 @@ float xParseFloat(const char *str, char **tail) {
 
 /**
  * Prints a double precision number, restricted to legal double-precision range. If the native
- * value has abolute value smaller than the smallest non-zero value, then 0 will printed instead.
+ * value has absolute value smaller than the smallest non-zero value, then 0 will printed instead.
  * For values that exceed the legal double precision range, "-inf" or "inf" will be used as
  * appropriate, and NAN values will be printed as "nan".
  *
  * @param str       Pointer to buffer for printed value. It should have at least 25 bytes of
- *                  space allocated after the specidied address.
+ *                  space allocated after the specified address.
  * @param value     Value to print.
  * @return          Number of characters printed into the buffer, or -1 if there was an error.
  */
@@ -686,7 +679,7 @@ int xPrintDouble(char *str, double value) {
 
 /**
  * Prints a single-precision number, restricted to the legal single-precision range. If the native
- * value has abolute value smaller than the smallest non-zero value, then 0 will printed instead.
+ * value has absolute value smaller than the smallest non-zero value, then 0 will printed instead.
  * For values that exceed the legal double precision range, "-inf" or "inf" will be used as
  * appropriate, and NAN values will be printed as "nan".
  *
@@ -743,7 +736,7 @@ int xError(const char *fn, int code) {
  * Returns a string description for one of the standard X-change error codes, and sets
  * errno as appropriate also. (The mapping to error codes is not one-to-one. The same
  * errno may be used to describe different X-change errors. Nevertheless, it is a guide
- * that can be used when the X-change error is not directtly available, e.g. because
+ * that can be used when the X-change error is not directly available, e.g. because
  * it is not returned by a given function.)
  *
  * \param code      One of the error codes defined in 'xchange.h'
@@ -773,5 +766,3 @@ const char *xErrorDescription(int code) {
   }
   return "unknown error";
 }
-
-
