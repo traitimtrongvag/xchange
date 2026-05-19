@@ -29,7 +29,7 @@ typedef struct {
   XLookupEntry **table;
   int nBins;
   int nEntries;
-  lock_type mutex;
+  xmut_type mutex;
 } XLookupPrivate;
 
 /// \endcond

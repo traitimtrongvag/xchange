@@ -12,14 +12,15 @@
 
 #if defined(_USE_PTHREAD) || defined(__unix__) || defined(__unix) || defined(__APPLE__)
 #  include <pthread.h>
+#  include <stdlib.h>         // for NULL
 
-#  define xmut_init(x)        pthread_mutex_init(x, (void *) 0)  ///< initialize mutex (not return)
+#  define xmut_init(x)        pthread_mutex_init(x, NULL)  ///< initialize mutex (not return)
 #  define xmut_lock           pthread_mutex_lock           ///< lock mutex
 #  define xmut_unlock         pthread_mutex_unlock         ///< unlock mutex
 #  define xmut_destroy        pthread_mutex_destroy        ///< destroy mutex
 #  define THREAD_SAFE         1                            ///< mutexes may be used
 
-typedef pthread_mutex_t       lock_type;                   ///< the mutex type
+typedef pthread_mutex_t       xmut_type;                   ///< the mutex type
 
 #elif __STDC_VERSION__ >= 201112L
 #  include <threads.h>
@@ -30,7 +31,7 @@ typedef pthread_mutex_t       lock_type;                   ///< the mutex type
 #  define xmut_destroy        mtx_destroy                  ///< destroy mutex
 #  define THREAD_SAFE         1                            ///< mutexes may be used
 
-typedef mtx_t                 lock_type;                   ///< the mutex type
+typedef mtx_t                 xmut_type;                   ///< the mutex type
 
 #elif defined(WIN32)
 #include <windows.h>
@@ -41,7 +42,7 @@ typedef mtx_t                 lock_type;                   ///< the mutex type
 #  define xmut_destroy(x)                                  ///< destroy mutex
 #  define THREAD_SAFE         1                            ///< mutexes may be used
 
-typedef SRWLOCK               lock_type;                   ///< the mutex type
+typedef SRWLOCK               xmut_type;                   ///< the mutex type
 
 #else
 #  define xmut_init(x)                                     ///< dummy initialze mutex
@@ -49,7 +50,7 @@ typedef SRWLOCK               lock_type;                   ///< the mutex type
 #  define xmut_unlock(x)                                   ///< dummy unlock mutex
 #  define xmut_destroy(x)                                  ///< dummy destroy mutex
 #  define THREAD_SAFE         0                            ///< mutexes may not be used
-typedef int                   lock_type;                   ///< dummy mutex type
+typedef int                   xmut_type;                   ///< dummy mutex type
 
 #endif
 
