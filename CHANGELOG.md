@@ -40,6 +40,8 @@ Upcoming feature release, possibly around 1 August 2026.
  - Fixed JSON unicode processing.
  
  - Fixed `PrintPrimitive()` return value for `X_CHAR(n)` types in `xjson.c`.
+ 
+ - `xGetAsLongAtIndex()` and `xGetAsDoubleAtIndex()` for string/raw types.
 
 ### Added
 

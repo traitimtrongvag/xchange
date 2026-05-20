@@ -374,14 +374,20 @@ long xGetAsLongAtIndex(const XField *f, int idx, long defaultValue) {
   }
 
   if(xIsCharSequence(f->type)) {
+    // Char sequences are not necessarily terminated, so we need to isolate the element in a
+    // terminated string first to avoid clobbering.
     long l = defaultValue;
-    char fmt[20];
+    int eSize = xElementSizeOf(f->type), n;
+    char *copy = (char *) calloc(1, eSize + 1);
+    x_check_alloc(copy);
 
-    snprintf(fmt, sizeof(fmt), "%%%dd", xElementSizeOf(f->type));
-    if(sscanf((char *) ptr, fmt, &l) != 1) {
-      double d = NAN;
-      snprintf(fmt, sizeof(fmt), "%%%dlf", xElementSizeOf(f->type));
-      if(sscanf((char *) ptr, fmt, &d) == 1) return (long) floor(d + 0.5);
+    strncpy(copy, ptr, eSize);
+    n = sscanf(copy, "%ld", &l);
+    free(copy);
+
+    if(n != 1) {
+      double d = xGetAsDoubleAtIndex(f, idx);
+      return isnan(d) ? defaultValue : (long) floor(d + 0.5);
     }
 
     return l;
@@ -405,7 +411,7 @@ long xGetAsLongAtIndex(const XField *f, int idx, long defaultValue) {
     case X_RAW: {
       double d = 0.0;
       errno = 0;
-      d = strtod(ptr, NULL);
+      d = strtod(*(char **) ptr, NULL);
       return (errno ? defaultValue : floor(d + 0.5));
     }
     default:
@@ -486,10 +492,17 @@ double xGetAsDoubleAtIndex(const XField *f, int idx) {
   }
 
   if(xIsCharSequence(f->type)) {
-    char fmt[20];
+    // Char sequences are not necessarily terminated, so we need to isolate the element in a
+    // terminated string first to avoid clobbering.
     double d = NAN;
-    snprintf(fmt, sizeof(fmt), "%%%dlf", xElementSizeOf(f->type));
-    sscanf((char *) ptr, fmt, &d);
+    int eSize = xElementSizeOf(f->type);
+    char *copy = (char *) calloc(1, eSize + 1);
+    x_check_alloc(copy);
+
+    strncpy(copy, ptr, eSize);
+    sscanf(copy, "%lf", &d);
+    free(copy);
+
     return d;
   }
 
@@ -509,7 +522,7 @@ double xGetAsDoubleAtIndex(const XField *f, int idx) {
     case X_RAW: {
       double d = 0.0;
       errno = 0;
-      d = strtod(ptr, NULL);
+      d = strtod(*(char **) ptr, NULL);
       return (errno ? NAN : d);
     }
     default: return NAN;
