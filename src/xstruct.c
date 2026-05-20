@@ -246,11 +246,9 @@ XField *xCopyOfField(const XField *f) {
 
   else if(f->type == X_RAW) {
     // raw value is single string pointer
-    char **src = (char **) f->value;
-    if(*src) {
-      char *str = xStringCopyOf(*src);
-      if(*src) copy->value = &str;
-    }
+    const char **src = (const char **) f->value;
+    char **dst = (char **) copy->value;
+    if(*src) *dst = xStringCopyOf(*src);
   }
 
   else if(f->type == X_STRING) {
@@ -780,7 +778,7 @@ XField *xCreateDoubleField(const char *name, double value) {
 }
 
 /**
- * Creates a field holding a single ineger value value.
+ * Creates a field holding a single integer value value.
  *
  * \param name      Field name (it may not contain a separator X_SEP)
  * \param value     Associated value
@@ -796,7 +794,7 @@ XField *xCreateIntField(const char *name, int value) {
 }
 
 /**
- * Creates a field holding a single ineger value value.
+ * Creates a field holding a single integer value value.
  *
  * \param name      Field name (it may not contain a separator X_SEP)
  * \param value     Associated value
@@ -850,7 +848,7 @@ XField *xCreateStringField(const char *name, const char *value) {
  * @param type    The new subtype to be assigned to the field. A copy of the value is used rather
  *                than the reference, so that the string that was supplied can be safely discarded
  *                at any point after the call.
- * @return        X_SUCCESS (0) if successful or else X_NULL if the intput field pointer is NULL.
+ * @return        X_SUCCESS (0) if successful or else X_NULL if the input field pointer is NULL.
  */
 int xSetSubtype(XField *f, const char *type) {
   if(!f) return x_error(X_NULL, EINVAL, "xSetSubtype", "input field is NULL");
@@ -875,7 +873,7 @@ boolean xIsFieldValid(const XField *f) {
   if(f->type == X_STRUCT) return TRUE;
   if(xElementSizeOf(f->type) <= 0) return FALSE;
   if(f->ndim < 0) return FALSE;
-  for(i=0; i <f->ndim; i++) if(f->sizes[0] <= 0) return FALSE;
+  for(i=0; i <f->ndim; i++) if(f->sizes[i] <= 0) return FALSE;
   return TRUE;
 }
 
