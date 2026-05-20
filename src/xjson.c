@@ -56,7 +56,7 @@ static void *ParsePrimitive(char **pos, XType *type, int *lineNumber);
 
 static int GetObjectStringSize(int prefixSize, const XStructure *s);
 static int GetFieldStringSize(int prefixSize, const XField *f, boolean ignoreName);
-static int GetArrayStringSize(int prefixSize,char *ptr, XType type, int ndim, const int *sizes);
+static int GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, const int *sizes);
 static int GetJsonStringSize(const char *src, int maxLength);
 
 static int PrintObject(const char *prefix, const XStructure *s, char *str);
@@ -390,8 +390,7 @@ XStructure *xjsonParseFile(FILE *fp, size_t length) {
   XStructure *s;
   int lineNumber = 0;
   long L = 0;
-  char *str;
-  volatile char *pos;
+  char *str, *pos;
 
   if(fp == NULL) {
     x_error(0, EINVAL, fn, "file is NULL");
@@ -414,7 +413,7 @@ XStructure *xjsonParseFile(FILE *fp, size_t length) {
   }
 
   pos = str = malloc(length + 1);
-  if(!str){
+  if(!str) {
     Error("Out of memory (read %ld bytes).\n", (long) (length + 1));
     return NULL;
   }
@@ -691,7 +690,7 @@ static char *ParseString(char **pos, int *lineNumber) {
       l++;
 
       if(c == 'u') {
-        // While 2-byte exscape sequences normally translate into a single character
+        // While 2-byte escape sequences normally translate into a single character
         // such as `\r` into <CR>, we keep the unicode in escaped form so `\u` stays
         // 2 bytes as `\u`.
         i++;
@@ -1291,8 +1290,9 @@ static int PrintPrimitive(const void *ptr, XType type, char *str) {
   if(!ptr) return sprintf(str, JSON_NULL);
 
   if(xIsCharSequence(type)) {
-    prop_error(fn, PrintString((char *) ptr, xElementSizeOf(type), str));
-    return X_SUCCESS;
+    int n = PrintString((char *) ptr, xElementSizeOf(type), str);
+    prop_error(fn, n);
+    return n;
   }
 
   switch(type) {
