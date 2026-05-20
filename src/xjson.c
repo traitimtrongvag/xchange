@@ -642,9 +642,11 @@ static char *json2raw(const char *json, int maxlen, char *dst) {
        isEscaped = FALSE;
        if(c == 'u') {
          unsigned short unicode;
-         if(sscanf(&json[i+1], "%hx", &unicode) == 1) {
+         int advance = 0;
+         if(sscanf(&json[i+1], "%hx%n", &unicode, &advance) >= 1) {
            if(unicode <= 0xFF) dst[l++] = (char) unicode;   // -> ASCII
            else l += sprintf(&dst[l], "\\u%04hx", unicode); // -> keep as is
+           i += advance;
          }
          else return "Unicode \\u without 4 digit hex";
        }
@@ -687,7 +689,18 @@ static char *ParseString(char **pos, int *lineNumber) {
     if(isEscaped) {
       isEscaped = FALSE;
       l++;
-      if(c == 'u') i++;
+
+      if(c == 'u') {
+        // While 2-byte exscape sequences normally translate into a single character
+        // such as `\r` into <CR>, we keep the unicode in escaped form so `\u` stays
+        // 2 bytes as `\u`.
+        i++;
+
+        // After `\u` we expect up to 4 hex bytes, which are processed as normal characters
+        // afterwards. However, since we'll print 4 bytes always, regardless of how many are
+        // specified in the input, we might need up to 4 extra spaces.
+        l += 4;
+      }
     }
     else if(c == '\\') isEscaped = TRUE;
     else if(c == '"') break;
@@ -1261,7 +1274,7 @@ static int PrintArray(const char *prefix, char *ptr, XType type, int ndim, const
     }
 
     // " ", or indented new line
-    if(newLine) str += sprintf(str, "\n%s", prefix);    // For newLine type elemments, close on an indented new line....
+    if(newLine) str += sprintf(str, "\n%s", prefix);    // For newLine type elements, close on an indented new line....
     else *(str++) = ' ';                                // Otherwise, just add a space...
 
     *(str++) = ']';                                     // Close bracket.
@@ -1389,7 +1402,7 @@ static int PrintString(const char *src, int maxLength, char *json) {
  *
  * @param src           Pointer to the native (unescaped) string, which may contain special characters.
  * @param maxLength     The number of characters in the input string if not terminated, or &lt;=0
- *                      if always teminated arbitrary length string.
+ *                      if always terminated arbitrary length string.
  * @return              The JSON representation of the original string, in which special characters
  *                      appear in escaped form (without the surrounding double quotes).
  *

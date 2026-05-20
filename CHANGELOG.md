@@ -36,6 +36,8 @@ Upcoming feature release, possibly around 1 August 2026.
    appropriate.
    
  - Extra comma when printing `X_FLOAT` value to JSON.
+ 
+ - Fixed JSON unicode processing.
 
 ### Added
 
