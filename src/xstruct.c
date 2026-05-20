@@ -18,7 +18,6 @@
 #define __XCHANGE_INTERNAL_API__      ///< Use internal definitions
 #include "xchange.h"
 
-
 /**
  * Creates a new empty XStructure.
  *
@@ -250,7 +249,7 @@ XField *xCopyOfField(const XField *f) {
     char **src = (char **) f->value;
     if(*src) {
       char *str = xStringCopyOf(*src);
-      if(*src) copy->value =  &str;
+      if(*src) copy->value = &str;
     }
   }
 
@@ -263,7 +262,6 @@ XField *xCopyOfField(const XField *f) {
 
   return copy;
 }
-
 
 /**
  * Return the reference to the field by the specified name, or NULL if no such field exists.
@@ -421,7 +419,7 @@ long xGetAsLongAtIndex(const XField *f, int idx, long defaultValue) {
  * Return a double-precision floating point value associated to the field, or else NAN if the field
  * cannot be represented as a decimal value. This call will use widening conversions as necessary to
  * convert between numerical types (e.g. `short` to `double`), while for string values will attempt
- * to parse a decomal value.
+ * to parse a decimal value.
  *
  * If the field is an array, the first element is converted and returned.
  *
@@ -448,7 +446,7 @@ double xGetAsDouble(const XField *f) {
  * Return a double-precision floating point value associated to the field, or else NAN if the element
  * cannot be represented as a decimal value. This call will use widening conversions as necessary to
  * convert between numerical types (e.g. `short` to `double`), while for string values will attempt
- * to parse a decomal value.
+ * to parse a decimal value.
  *
  * @param f     Pointer to field
  * @param idx   Array index (zero-based) of the element of interest.
@@ -497,14 +495,6 @@ double xGetAsDoubleAtIndex(const XField *f, int idx) {
     return d;
   }
 
-  if(xIsCharSequence(f->type)) {
-    double d = 0.0;
-    errno = 0;
-    d = strtod(ptr, NULL);
-    if(errno) return NAN;
-    return d;
-  }
-
   switch(f->type) {
     case X_BOOLEAN: return *(boolean *) ptr;
     case X_BYTE: return *(int8_t *) ptr;
@@ -513,12 +503,10 @@ double xGetAsDoubleAtIndex(const XField *f, int idx) {
     case X_INT64: return *(int64_t *) ptr;
     case X_FLOAT: {
       const float *x = (float *) ptr;
-      return (long) floor(*x + 0.5);
+      return (double) *x;
     }
-    case X_DOUBLE: {
-      const double *x = (double *) ptr;
-      return (long) floor(*x + 0.5);
-    }
+    case X_DOUBLE:
+      return *(double *) ptr;
     case X_STRING:
     case X_RAW: {
       double d = 0.0;
@@ -742,7 +730,6 @@ XField *xCreateField(const char *name, XType type, int ndim, const int *sizes, c
   return f;
 }
 
-
 /**
  * Creates a generic scalar field of a given name and native value. The structure will hold a copy
  * of the value that is pointed at.
@@ -824,7 +811,6 @@ XField *xCreateLongField(const char *name, long long value) {
   return f;
 }
 
-
 /**
  * Creates a field holding a single boolean value value.
  *
@@ -838,7 +824,6 @@ XField *xCreateBooleanField(const char *name, boolean value) {
   if(!f) return x_trace_null("xCreateBooleanField", NULL);
   return f;
 }
-
 
 /**
  * Creates a field holding a single string value. The field will hold a copy of the supplied
@@ -1413,8 +1398,6 @@ int xReduceStruct(XStructure *s) {
   return X_SUCCESS;
 }
 
-
-
 /**
  * Returns a pointer to the beginning of the next component in a compound ID. Leading ID separators are ignored.
  *
@@ -1496,7 +1479,6 @@ int xMatchNextID(const char *token, const char *id) {
 
   return X_SUCCESS;
 }
-
 
 /**
  * Returns the aggregated (hierarchical) &lt;table&gt;:&lt;key&gt; ID. The caller is responsible for calling free()
@@ -1674,7 +1656,6 @@ int xSortFields(XStructure *s, int (*cmp)(const XField **f1, const XField **f2),
 
   return X_SUCCESS;
 }
-
 
 static int XFieldNameCmp(const XField **f1, const XField **f2) {
   return strcmp((*f1)->name, (*f2)->name);
