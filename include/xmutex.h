@@ -33,8 +33,8 @@ typedef pthread_mutex_t       xmut_type;                   ///< the mutex type
 
 typedef mtx_t                 xmut_type;                   ///< the mutex type
 
-#elif defined(WIN32)
-#include <windows.h>
+#elif defined(_MSC_VER)
+#  include <windows.h>
 
 #  define xmut_init(x)        InitializeSRWLock(x)         ///< initialize mutex (not return)
 #  define xmut_lock           AcquireSRWLockExclusive      ///< lock mutex
@@ -45,7 +45,7 @@ typedef mtx_t                 xmut_type;                   ///< the mutex type
 typedef SRWLOCK               xmut_type;                   ///< the mutex type
 
 #else
-#  define xmut_init(x)                                     ///< dummy initialze mutex
+#  define xmut_init(x)                                     ///< dummy initialize mutex
 #  define xmut_lock(x)                                     ///< dummy lock mutex
 #  define xmut_unlock(x)                                   ///< dummy unlock mutex
 #  define xmut_destroy(x)                                  ///< dummy destroy mutex

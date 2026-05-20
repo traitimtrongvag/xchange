@@ -145,15 +145,15 @@ typedef int XType;          ///< SMA-X data type.
 #undef X_INT32_MAX
 #undef X_INT64_MAX
 
-#define X_SEP               ":"             ///< sepatator for patterning of notification channels, e.g. "changed:<table>:<key>"
+#define X_SEP               ":"             ///< separator for patterning of notification channels, e.g. "changed:<table>:<key>"
 #define X_SEP_LENGTH         (sizeof(X_SEP) - 1)    ///< String length of hierarchical separator.
 
 #define X_TIMESTAMP_LENGTH              18      ///< Characters in timestamp, 10 + 6 + 2 = 18  including termination
-#define X_MAX_DIMS                      20      ///< Maximum number of dimensionas (2^20 -> 1 million points).
+#define X_MAX_DIMS                      20      ///< Maximum number of dimensions (2^20 -> 1 million points).
 #define X_MAX_STRING_DIMS               (2 * X_MAX_DIMS + 1)    ///< \hideinitializer Maximum length of string representation of dimensions
 #define X_MAX_ELEMENTS                  (1<<X_MAX_DIMS)         ///< \hideinitializer Maximum number of array elements (~1 million).
 
-#if defined(WIN32)
+#if defined(_MSC_VER)
 #  include <windows.h>             // for boolean
 #elif !defined(_TYPEDEF_BOOLEAN)
 #  define _TYPEDEF_BOOLEAN         ///< Precompiler constant to indicate that we use the xchange definition of a boolean
@@ -188,7 +188,7 @@ typedef struct XField {
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
   XType type;               ///< The underlyng data type
   char *subtype;            ///< (optional) Descriptive subtype, such a a mime type or encoding (if any). It is
-                            ///< entirely up to the user / application to assing meaning to this field.
+                            ///< entirely up to the user / application to assign meaning to this field.
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
   int ndim;                 ///< The dimensionality of the data
   int sizes[X_MAX_DIMS];    ///< The sizes along each dimension
