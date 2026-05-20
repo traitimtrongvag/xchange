@@ -406,7 +406,7 @@ long xGetAsLongAtIndex(const XField *f, int idx, long defaultValue) {
       double d = 0.0;
       errno = 0;
       d = strtod(ptr, NULL);
-      return (errno ? defaultValue : d);
+      return (errno ? defaultValue : floor(d + 0.5));
     }
     default:
       return defaultValue;
@@ -1142,7 +1142,7 @@ XField *xSetField(XStructure *s, XField *f) {
  * Returns the number of fields contained inside the structure. It is not recursive.
  *
  * @param s     Pointer to the structure to investigate
- * @return      the number of fields cotnained in the structure (but not counting fields in sub-structures).
+ * @return      the number of fields contained in the structure (but not counting fields in sub-structures).
  *
  * @sa xDeepCountFields()
  */
@@ -1170,7 +1170,7 @@ void xDestroyStruct(XStructure *s) {
 }
 
 /**
- * Clears an X structure field, freeing up all referfenced resources. However, the
+ * Clears an X structure field, freeing up all referenced resources. However, the
  * field itself is kept, but its contents are reset.
  *
  * \param f     Pointer to the field to be cleared.
@@ -1352,7 +1352,7 @@ int xReduceField(XField *f) {
 }
 
 /**
- * Recursively eliminates unneccessary embedding of singular structures inside a structure and reduces the
+ * Recursively eliminates unnecessary embedding of singular structures inside a structure and reduces the
  * dimensions of array fields with xReduceDims(), recursively. It will also eliminate the unnecessary wrapping
  * of a singular array into a single XField.
  *

@@ -27,6 +27,8 @@ Upcoming feature release, possibly around 1 August 2026.
  - Fix potential buffer overflow at build time in `docedit.c` (`sprintf()` to `snprintf()`).
  
  - Fixed max string size for 8-byte signed integer (-> 20 bytes + termination).
+ 
+ - Fixed insufficient checking in `xIsFieldValid()`.
 
 ### Added
 
@@ -35,6 +37,8 @@ Upcoming feature release, possibly around 1 August 2026.
 ### Changed
 
  - Changed `xlookup` hash algorithm to FNV-1a.
+ 
+ - Rounding instead of downcast from double in `xGetAsLongAtIndex()`.
 
  - CMake install to skip `.gitignore` in `examples/`.
  
