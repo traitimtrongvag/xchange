@@ -53,7 +53,7 @@ XField *xCreateMixedArrayField(const char *name, int ndim, const int *sizes, XFi
 
   while(--count >= 0) {
     char idx[20];
-    x_snprintf(idx, sizeof(idx), ".%d", (count+1));
+    x_snprintf(idx, sizeof(idx), ".%d", (count + 1));
     array[count].name = xStringCopyOf(idx);
   }
 
@@ -574,7 +574,7 @@ char *xGetStringValue(const XField *f) {
  *
  * @sa xGetStringValue()
  * @sa xGetAsLongAtIndex()
- * @sa xGetDoubleAtIndex()
+ * @sa xGetAsDoubleAtIndex()
  */
 char *xGetStringAtIndex(const XField *f, int idx) {
   static const char *fn = "xGetStringAtIndex";
@@ -997,7 +997,7 @@ XField *xSetSubstruct(XStructure *s, const char *name, XStructure *substruct) {
 }
 
 /**
- * Removes as field from the structure, returning it if found.
+ * Removes a field from the structure, returning it if found.
  *
  * \param s     Pointer to structure
  * \param name  Name of field to remove
@@ -1305,7 +1305,7 @@ int xReduceDims(int *ndim, int *sizes) {
 
   for(i = *ndim; --i >= 0; ) if (sizes[i] == 1) {
     (*ndim)--;
-    if(i < *ndim - 1) memmove(&sizes[i], &sizes[i+1], (*ndim - i - 1) * sizeof(int));
+    if(i < *ndim) memmove(&sizes[i], &sizes[i+1], (*ndim - i) * sizeof(int));
     else sizes[i] = 0;
   }
 
@@ -1395,7 +1395,7 @@ int xReduceStruct(XStructure *s) {
     s->firstField = sub->firstField;
 
     for(sf = s->firstField; sf; sf = sf->next) if(sf->type == X_STRUCT) {
-      XStructure *ss = (XStructure *) f->value;
+      XStructure *ss = (XStructure *) sf->value;
       int i = xGetFieldCount(sf);
       while(--i >= 0) ss[i].parent = s;
     }
@@ -1468,7 +1468,7 @@ char *xCopyIDToken(const char *id) {
  * Checks if the next component in a compound id matches a given token.
  *
  * @param token     Full token to check for
- * @param id        Compount X ID.
+ * @param id        Compound X ID.
  * @return          X_SUCCESS if it's a match. Otherwise X_FAILURE or another X error if the
  *                  arguments are invalid.
  */
