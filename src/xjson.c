@@ -216,7 +216,7 @@ char *xjsonFieldToIndentedString(int indent, const XField *f) {
 
   prefix = malloc(indent + 1);
   if(!prefix) {
-    x_error(0, errno, fn, "alloc error (%d) bytes", (n + 1));
+    x_error(0, errno, fn, "alloc error (%ld) bytes", (n + 1));
     return NULL;
   }
   if(indent > 0) memset(prefix, ' ', indent);
@@ -224,7 +224,7 @@ char *xjsonFieldToIndentedString(int indent, const XField *f) {
 
   str = (char *) malloc(n + 1);  // + '\0'
   if(!str) {
-    x_error(0, errno, fn, "alloc error (%d) bytes", (n + 1));
+    x_error(0, errno, fn, "alloc error (%ld) bytes", (n + 1));
     free(prefix);
     return NULL;
   }
@@ -975,7 +975,7 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
     // Thus far sizes is the size of top-level entries
     eCount = xGetElementCount(*ndim, sizes);
     eSize = xElementSizeOf(*type);
-    rowSize = eSize * eCount;
+    rowSize = (size_t) eSize * eCount;
 
     // If only contains an empty array then treat as n = 0...
     if(eCount == 0 && n == 1) n = 0;
@@ -1428,7 +1428,7 @@ char *xjsonEscape(const char *src, size_t maxLength) {
 
   json = malloc(size + 1);
   if(!json) {
-    x_error(0, errno, fn, "malloc() error (%d bytes)", (size + 1));
+    x_error(0, errno, fn, "malloc() error (%ld bytes)", (size + 1));
     return NULL;
   }
 
@@ -1460,7 +1460,7 @@ char *xjsonUnescape(const char *str) {
   l = strlen(str);
   raw = (char *) malloc(l + 1);
   if(!raw) {
-    x_error(0, errno, fn, "alloc error (%d bytes)", (l + 1));
+    x_error(0, errno, fn, "alloc error (%zu bytes)", (l + 1));
     return NULL;
   }
 
