@@ -186,7 +186,7 @@ typedef struct XField {
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
   void *value;              ///< Pointer to designated local string content (or structure)...
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
-  XType type;               ///< The underlyng data type
+  XType type;               ///< The underlying data type
   char *subtype;            ///< (optional) Descriptive subtype, such a a mime type or encoding (if any). It is
                             ///< entirely up to the user / application to assign meaning to this field.
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
@@ -308,9 +308,12 @@ boolean xParseBoolean(const char *str, char **end);
 float xParseFloat(const char *str, char **tail);
 double xParseDouble(const char *str, char **tail);
 int xPrintDouble(char *str, double value);
+int xPrintDoubleN(char *str, double value, size_t len);
 int xPrintFloat(char *str, float value);
+int xPrintFloatN(char *str, float value, size_t len);
 int xParseDims(const char *src, int *sizes);
 int xPrintDims(char *dst, int ndim, const int *sizes);
+int xPrintDimsN(char *dst, int ndim, const int *sizes, size_t len);
 
 // Low-level utilities ---------------------------------------->
 char xTypeChar(XType type);
@@ -349,6 +352,18 @@ int x_error(int ret, int en, const char *from, const char *desc, ...);
 int x_warn(const char *from, const char *desc, ...);
 int x_trace(const char *loc, const char *op, int n);
 void *x_trace_null(const char *loc, const char *op);
+
+// Check to see if snprintf() is available, or if we should use our own dummy version of it.
+#if !defined(X_SNPRINTF) && ( defined(snprintf) || defined(__cplusplus) || __STDC_VERSION__ >= 199901L \
+        || defined(_MSC_VER) || defined(_ISOC99_SOURCE) || _XOPEN_SOURCE >= 500 || defined(_BSD_SOURCE) )
+#  define x_snprintf    snprintf      ///< Use the builtin snprintf function
+#else
+#  ifndef X_SNPRINTF
+#    define X_SNPRINT                 ///< Use out own dummy version of snprintf() (which is the same as sprintf())
+#  endif
+
+int x_snprintf(char *buf, size_t len, const char *fmt, ...);
+#endif
 
 /**
  * Propagates an error (if any) with an offset. If the error is non-zero, it returns with the offset

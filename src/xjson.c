@@ -54,16 +54,16 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
 static char *ParseString(char **pos, int *lineNumber);
 static void *ParsePrimitive(char **pos, XType *type, int *lineNumber);
 
-static int GetObjectStringSize(int prefixSize, const XStructure *s);
-static int GetFieldStringSize(int prefixSize, const XField *f, boolean ignoreName);
-static int GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, const int *sizes);
-static int GetJsonStringSize(const char *src, int maxLength);
+static long GetObjectStringSize(int prefixSize, const XStructure *s);
+static long GetFieldStringSize(int prefixSize, const XField *f, boolean ignoreName);
+static long GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, const int *sizes);
+static long GetJsonStringSize(const char *src, int maxLength);
 
-static int PrintObject(const char *prefix, const XStructure *s, char *str);
-static int PrintField(const char *prefix, const XField *f, char *str);
-static int PrintArray(const char *prefix, char *ptr, XType type, int ndim, const int *sizes, char *str);
-static int PrintPrimitive(const void *ptr, XType type, char *str);
-static int PrintString(const char *src, int maxLength, char *json);
+static long PrintObject(const char *prefix, const XStructure *s, char *str, size_t len);
+static long PrintField(const char *prefix, const XField *f, char *str, size_t len);
+static long PrintArray(const char *prefix, char *ptr, XType type, int ndim, const int *sizes, char *str, size_t len);
+static long PrintPrimitive(const void *ptr, XType type, char *str, size_t len);
+static long PrintString(const char *src, size_t maxLength, char *json, size_t len);
 
 static FILE *xerr;     ///< File / stream, which errors are printed to. A NULL will print to stderr
 
@@ -157,7 +157,7 @@ static char *GetIndent() {
  */
 char *xjsonToString(const XStructure *s) {
   char *str;
-  int n;
+  long n;
 
   if(!s) return xStringCopyOf(JSON_NULL);
   if(!xerr) xerr = stderr;
@@ -175,13 +175,13 @@ char *xjsonToString(const XStructure *s) {
     return NULL;
   }
 
-  n = PrintObject("", s, str);
+  n = PrintObject("", s, str, n + 2);
   if (n < 0) {
     free(str);
     return NULL;
   }
 
-  sprintf(&str[n], "\n");
+  x_snprintf(&str[n], 2, "\n");
 
   return str;
 }
@@ -201,7 +201,7 @@ char *xjsonFieldToIndentedString(int indent, const XField *f) {
   static const char *fn = "xjsonFieldToIndentedString";
 
   char *prefix, *str;
-  int n;
+  long n;
 
   if(!f) return xStringCopyOf(JSON_NULL);
   if(!xerr) xerr = stderr;
@@ -229,7 +229,7 @@ char *xjsonFieldToIndentedString(int indent, const XField *f) {
     return NULL;
   }
 
-  n = PrintField(prefix, f, str);
+  n = PrintField(prefix, f, str, n + 1);
   free(prefix);
 
   if (n < 0) {
@@ -630,9 +630,9 @@ static char UnescapedChar(char c) {
   return c;
 }
 
-static char *json2raw(const char *json, int maxlen, char *dst) {
+static char *json2raw(const char *json, size_t maxlen, char *dst) {
   int isEscaped = 0;
-  int i, l = 0;
+  size_t i, l = 0;
 
   for(i = 0; l < maxlen; i++) {
      char c = json[i];
@@ -644,7 +644,7 @@ static char *json2raw(const char *json, int maxlen, char *dst) {
          int advance = 0;
          if(sscanf(&json[i+1], "%hx%n", &unicode, &advance) >= 1) {
            if(unicode <= 0xFF) dst[l++] = (char) unicode;   // -> ASCII
-           else l += sprintf(&dst[l], "\\u%04hx", unicode); // -> keep as is
+           else l += x_snprintf(&dst[l], maxlen - l, "\\u%04hx", unicode); // -> keep as is
            i += advance;
          }
          else return "Unicode \\u without 4 digit hex";
@@ -664,7 +664,7 @@ static char *json2raw(const char *json, int maxlen, char *dst) {
 
 static char *ParseString(char **pos, int *lineNumber) {
   int isEscaped = 0;
-  int i, l;
+  size_t i, l;
   char *next, *dst;
 
   next = *pos = SkipSpaces(*pos, lineNumber);
@@ -849,7 +849,7 @@ static XType GetCommonType(XType t1, XType t2) {
 }
 
 static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS], int *lineNumber) {
-  int n = 0;
+  size_t n = 0;
   char *next;
   XField *first = NULL, *last = NULL;
 
@@ -927,7 +927,7 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
   // For heterogeneous arrays, return an array of XFields...
   if(*type == X_FIELD) {
     XField *array, *e = first;
-    int i;
+    size_t i;
 
     array = (XField *) calloc(n, sizeof(XField));
     x_check_alloc(array);
@@ -941,7 +941,7 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
       XField *nextField = e->next;
 
       // Name is . + 1-based index, e.g. ".1", ".2"...
-      sprintf(idx, ".%d", (i + 1));
+      x_snprintf(idx, sizeof(idx), ".%zu", (i + 1));
 
       array[i] = *e;
       array[i].name = xStringCopyOf(idx);
@@ -963,8 +963,8 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
 
   // Otherwise return a primitive array...
   else {
-    int i, eCount, eSize;
-    int rowSize;
+    size_t i, rowSize;
+    int k, eCount, eSize;
     char *data = NULL;
 
     if(*ndim >= X_MAX_DIMS) {
@@ -981,7 +981,7 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
     if(eCount == 0 && n == 1) n = 0;
 
     // Add in the top-level dimension
-    for(i = *ndim; --i >= 0; ) sizes[i+1] = sizes[i];
+    for(k = *ndim; --k >= 0; ) sizes[k+1] = sizes[k];
     sizes[0] = n;
     (*ndim)++;
 
@@ -1029,16 +1029,14 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
   return NULL;
 }
 
-static int GetObjectStringSize(int prefixSize, const XStructure *s) {
-  int n;
+static long GetObjectStringSize(int prefixSize, const XStructure *s) {
   const XField *f;
+  long n = prefixSize + 4;       // "{\n" + .... + <prefix> + "}\n";
 
   if(!s) return 0;
 
-  n = prefixSize + 4;       // "{\n" + .... + <prefix> + "}\n";
-
   for(f = s->firstField; f != NULL; f = f->next) {
-    int m = GetFieldStringSize(prefixSize + ilen, f, f->type == X_FIELD);
+    long m = GetFieldStringSize(prefixSize + ilen, f, f->type == X_FIELD);
     prop_error("GetObjectStringSize", m);
     n += m;
   }
@@ -1046,29 +1044,28 @@ static int GetObjectStringSize(int prefixSize, const XStructure *s) {
   return n;
 }
 
-
-static int PrintObject(const char *prefix, const XStructure *s, char *str) {
+static long PrintObject(const char *prefix, const XStructure *s, char *str, size_t len) {
   static const char *fn = "PrintObject";
 
+  size_t plen, n;
   char *fieldPrefix;
   const XField *f;
-  int n = 0;
 
   if(!s) return X_SUCCESS;
   if(!str) return x_error(X_NULL, EINVAL, fn, "output string buffer is NULL");
   if(!prefix) return x_error(X_NULL, EINVAL, fn, "prefix is NULL");
 
-  if(!s->firstField) return sprintf(&str[n], "{ }");
+  if(!s->firstField) return x_snprintf(str, len, "{ }");
 
-  fieldPrefix = (char *) malloc(strlen(prefix) + xjsonGetIndent() + 1);
+  plen = strlen(prefix) + xjsonGetIndent() + 1;
+  fieldPrefix = (char *) malloc(plen);
   x_check_alloc(fieldPrefix);
 
-  sprintf(fieldPrefix, "%s%s", prefix, GetIndent());
-
-  n += sprintf(str, "{\n");
+  x_snprintf(fieldPrefix, plen, "%s%s", prefix, GetIndent());
+  n = x_snprintf(str, len, "{\n");
 
   for(f = s->firstField; f != NULL; f = f->next) {
-    int m = PrintField(fieldPrefix, f, &str[n]);
+    long m = PrintField(fieldPrefix, f, &str[n], len - n);
     if(m < 0) {
       free(fieldPrefix);
       return x_trace(fn, NULL, m);     // Error code;
@@ -1077,15 +1074,15 @@ static int PrintObject(const char *prefix, const XStructure *s, char *str) {
   }
 
   free(fieldPrefix);
-  n += sprintf(&str[n], "%s}", prefix);
+  n += x_snprintf(&str[n], len - n, "%s}", prefix);
 
   return n;
 }
 
-static int GetFieldStringSize(int prefixSize, const XField *f, boolean ignoreName) {
+static long GetFieldStringSize(int prefixSize, const XField *f, boolean ignoreName) {
   static const char *fn = "GetFieldStringSize";
 
-  int n = prefixSize + 2, m;      // <value> + `,\n`
+  long n = prefixSize + 2, m;      // <value> + `,\n`
 
   if(f == NULL) return 0;
 
@@ -1104,10 +1101,11 @@ static int GetFieldStringSize(int prefixSize, const XField *f, boolean ignoreNam
   return n + m; // termination
 }
 
-static int PrintField(const char *prefix, const XField *f, char *str) {
+static long PrintField(const char *prefix, const XField *f, char *str, size_t len) {
   static const char *fn = "PrintField";
 
-  int n = 0, m;
+  size_t n = 0;
+  long m;
 
   if(str == NULL) return x_error(X_NULL, EINVAL, fn, "output string buffer is NULL");
   if(f == NULL) return 0;
@@ -1115,16 +1113,16 @@ static int PrintField(const char *prefix, const XField *f, char *str) {
   if(*f->name == '\0') return x_error(X_NAME_INVALID, EINVAL, fn, "field->name is empty");
   if(f->isSerialized) return x_error(X_PARSE_ERROR, ENOMSG, fn, "field is serialized (unknown format)");        // We don't know what format, so return an error
 
-  n = sprintf(str, "%s", prefix);
-  n += PrintString(f->name, -1, &str[n]);
-  n += sprintf(&str[n], ": ");
+  n = x_snprintf(str, len, "%s", prefix);
+  n += PrintString(f->name, -1, &str[n], len - n);
+  n += x_snprintf(&str[n], len - n, ": ");
 
-  m = PrintArray(prefix, f->value, f->type, f->ndim, f->sizes, &str[n]);
+  m = PrintArray(prefix, f->value, f->type, f->ndim, f->sizes, &str[n], len - n);
   prop_error(fn, m);
 
   n += m;
-  if(f->next) n += sprintf(&str[n], ",");
-  n += sprintf(&str[n], "\n");
+  if(f->next) n += x_snprintf(&str[n], len - n, ",");
+  n += x_snprintf(&str[n], len - n, "\n");
 
   return n;
 }
@@ -1137,14 +1135,14 @@ static int SizeOf(XType type, int ndim, const int *sizes) {
   return xElementSizeOf(type) * xGetElementCount(ndim, sizes);
 }
 
-static int GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, const int *sizes) {
+static long GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, const int *sizes) {
   static const char *fn = "GetArrayStringSize";
 
   if(!ptr) return prefixSize + sizeof(JSON_NULL); // null
   if(ndim < 0) return x_error(X_SIZE_INVALID, EINVAL, fn, "invalid ndim: %d", ndim);
 
   if(ndim == 0) {
-    int m;
+    long m;
 
     switch(type) {
       case X_UNKNOWN:
@@ -1180,11 +1178,11 @@ static int GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, c
     const boolean newLine = IsNewLine(type, ndim);
     int k;
 
-    int n = 4;     // "[ " + .... +  " ]" or "[\n" + ... + "\n]"
+    long n = 4;     // "[ " + .... +  " ]" or "[\n" + ... + "\n]"
     if(newLine) n += prefixSize + 1;            // '\n' + prefix
 
     for(k = 0; k < N; k++, ptr += rowSize) {
-      int m = GetArrayStringSize(prefixSize + ilen, ptr, type, ndim-1, &sizes[1]);
+      long m = GetArrayStringSize(prefixSize + ilen, ptr, type, ndim-1, &sizes[1]);
       prop_error(fn, m);
 
       n += m + 3; // + " , " or " ,\n"
@@ -1194,7 +1192,7 @@ static int GetArrayStringSize(int prefixSize, char *ptr, XType type, int ndim, c
   }
 }
 
-static int PrintArray(const char *prefix, char *ptr, XType type, int ndim, const int *sizes, char *str) {
+static long PrintArray(const char *prefix, char *ptr, XType type, int ndim, const int *sizes, char *str, size_t len) {
   static const char *fn = "PrintArray";
 
   const char *str0 = str;
@@ -1205,19 +1203,18 @@ static int PrintArray(const char *prefix, char *ptr, XType type, int ndim, const
   if(ndim < 0) return x_error(X_SIZE_INVALID, ERANGE, fn, "invalid ndim: %d", ndim);
 
   if(ndim == 0) {
-    int n;
-
+    size_t n;
     switch(type) {
       case X_STRUCT:
-        n = PrintObject(prefix, (XStructure *) ptr, str);
+        n = PrintObject(prefix, (XStructure *) ptr, str, len);
         break;
       case X_FIELD: {
         XField *f = (XField *) ptr;
-        n = PrintArray(prefix, f->value, f->type, f->ndim, f->sizes, str);
+        n = PrintArray(prefix, f->value, f->type, f->ndim, f->sizes, str, len);
         break;
       }
       default:
-        n = PrintPrimitive(ptr, type, str);
+        n = PrintPrimitive(ptr, type, str, len);
     }
 
     prop_error(fn, n);
@@ -1227,6 +1224,7 @@ static int PrintArray(const char *prefix, char *ptr, XType type, int ndim, const
     const int N = sizes[0];
     const int rowSize = ptr ? SizeOf(type, ndim-1, &sizes[1]) : 0;
     const boolean newLine = ptr ? IsNewLine(type, ndim) : FALSE;
+    size_t n = 0, plen;
 
     int k;
     char *rowPrefix;
@@ -1240,74 +1238,78 @@ static int PrintArray(const char *prefix, char *ptr, XType type, int ndim, const
     }
 
     // Indentation for elements...
-    rowPrefix = (char *) malloc(strlen(prefix) + xjsonGetIndent() + 2);
+    plen = strlen(prefix) + xjsonGetIndent() + 2;
+    rowPrefix = (char *) malloc(plen);
     x_check_alloc(rowPrefix);
 
-    sprintf(rowPrefix, "%s%s", prefix, GetIndent());
+    x_snprintf(rowPrefix, plen, "%s%s", prefix, GetIndent());
 
-    *(str++) = '[';                                     // Opening bracket at current position...
+    if(len)
+      str[n++] = '[';                                     // Opening bracket at current position...
 
     // Print elements as required.
     for(k = 0; k < N; k++, ptr += rowSize) {
-      int m;
+      long m;
 
       // " ,"
-      if(k) str += sprintf(str, ",");
+      if(k) n += x_snprintf(&str[n], len - n, ",");
 
       // " ", or row indented new line
-      if(newLine) str += sprintf(str, "\n%s", rowPrefix);
-      else *(str++) = ' ';
+      if(newLine) n += x_snprintf(&str[n], len - n,  "\n%s", rowPrefix);
+      else if(n < len) str[n++] = ' ';
 
       // The next element...
       if (type == X_STRUCT) {
-        m = PrintObject(rowPrefix, (XStructure *) ptr, str);
+        m = PrintObject(rowPrefix, (XStructure *) ptr, &str[n], len - n);
       }
       else {
-        m = PrintArray(rowPrefix, ptr, type, ndim-1, &sizes[1], str);
+        m = PrintArray(rowPrefix, ptr, type, ndim-1, &sizes[1], &str[n], len - n);
       }
+
       if(m < 0) {
         free(rowPrefix);
         return x_trace(fn, NULL, m);       // Error code
       }
-      str += m;
+
+      n += m;
     }
 
     // " ", or indented new line
-    if(newLine) str += sprintf(str, "\n%s", prefix);    // For newLine type elements, close on an indented new line....
-    else *(str++) = ' ';                                // Otherwise, just add a space...
+    if(newLine) n += x_snprintf(&str[n], len - n, "\n%s", prefix);    // For newLine type elements, close on an indented new line....
+    else if(n < len) str[n++] = ' ';                                // Otherwise, just add a space...
 
-    *(str++) = ']';                                     // Close bracket.
+    if(n < len) str[n++] = ']';                                     // Close bracket.
 
     free(rowPrefix);
 
-    return str - str0;
+    return n;
   }
 }
 
-static int PrintPrimitive(const void *ptr, XType type, char *str) {
+static long PrintPrimitive(const void *ptr, XType type, char *str, size_t len) {
   static const char *fn = "PrintPrimitive";
 
-  if(!ptr) return sprintf(str, JSON_NULL);
+  if(!ptr) return x_snprintf(str, len, JSON_NULL);
 
   if(xIsCharSequence(type)) {
-    int n = PrintString((char *) ptr, xElementSizeOf(type), str);
+    long n = PrintString((char *) ptr, xElementSizeOf(type), str, len);
     prop_error(fn, n);
     return n;
   }
 
   switch(type) {
-    case X_UNKNOWN: return sprintf(str, JSON_NULL);
-    case X_BOOLEAN: return sprintf(str, (*(boolean *)ptr ? JSON_TRUE : JSON_FALSE));
-    case X_BYTE: return sprintf(str, "%hhu", *(unsigned char *) ptr);
-    case X_FLOAT: return sprintf(str, "%.8g", *(float *) ptr);
-    case X_DOUBLE: return xPrintDouble(str, *(double *) ptr);
+    case X_UNKNOWN: return x_snprintf(str, len, JSON_NULL);
+    case X_BOOLEAN: return x_snprintf(str, len, (*(boolean *)ptr ? JSON_TRUE : JSON_FALSE));
+    case X_BYTE: return x_snprintf(str, len, "%hhu", *(unsigned char *) ptr);
+    case X_FLOAT: return xPrintFloatN(str, *(float *) ptr, len);
+    case X_DOUBLE: return xPrintDoubleN(str, *(double *) ptr, len);
     case X_STRING:
-    case X_RAW: return PrintString(*(char **) ptr, TERMINATED_STRING, str);
+    case X_RAW: return PrintString(*(char **) ptr, TERMINATED_STRING, str, len);
     default:
-      if(type == X_SHORT) return sprintf(str, "%hd", *(short *) ptr);
-      else if(type == X_INT) return sprintf(str, "%d", *(int *) ptr);
-      else if(type == X_LONG) return sprintf(str, "%ld", *(long *) ptr);
-      else if(type == X_LLONG) return sprintf(str, "%lld", *(long long *) ptr);
+      if(type == X_SHORT) return x_snprintf(str, len, "%hd", *(short *) ptr);
+      else if(type == X_INT) return x_snprintf(str, len, "%d", *(int *) ptr);
+      else if(type == X_LONG) return x_snprintf(str, len, "%ld", *(long *) ptr);
+      else if(type == X_LLONG) return x_snprintf(str, len, "%lld", *(long long *) ptr);
 
       return x_error(X_TYPE_INVALID, EINVAL, fn, "invalid type: %d", type);
   }
@@ -1331,8 +1333,8 @@ static int GetJsonBytes(char c) {
   return 1;
 }
 
-static int GetJsonStringSize(const char *src, int maxLength) {
-  int i, n = 2; // ""
+static long GetJsonStringSize(const char *src, int maxLength) {
+  long i, n = 2; // ""
 
   if(maxLength < 0) {
     for(i = 0; src[i]; i++)
@@ -1358,38 +1360,37 @@ static char GetEscapedChar(char c) {
   return c;
 }
 
-static int raw2json(const char *src, int maxlen, char *json) {
-  char *next = json;
-  int i;
+static int raw2json(const char *src, size_t maxlen, char *json, size_t len) {
+  size_t i, n = 0, last = len > 2 ? len - 2 : 0;
 
   for(i = 0; i < maxlen && src[i]; i++) switch(GetJsonBytes(src[i])) {
     case UNICODE_BYTES:
-      *(next++) = '\\';
-      *(next++) = 'u';
-      next += sprintf(next, "00%02hhx", (unsigned char) src[i]);
+      if(n < last) json[n++] = '\\';
+      if(n < last) json[n++] = 'u';
+      n += x_snprintf(&json[n], len - n, "00%02hhx", (unsigned char) src[i]);
       break;
     case 2:
-      *(next++) = '\\';
-      *(next++) = GetEscapedChar(src[i]);
+      if(n < last) json[n++] = '\\';
+      if(n < last) json[n++] = GetEscapedChar(src[i]);
        break;
     case 1:
-      *(next++) = src[i];
+      if(n < last) json[n++] = src[i];
       break;
   }
 
-  *(next++) = '\0';
+  if(n < len) json[n++] = '\0';
 
-  return next - json - 1;
+  return n - 1;
 }
 
-static int PrintString(const char *src, int maxLength, char *json) {
+static long PrintString(const char *src, size_t maxLength, char *json, size_t len) {
   char *next = json;
 
-  if(maxLength < 0) maxLength = INT_MAX;
+  if(maxLength == 0) maxLength = SIZE_MAX;
 
   *(next++) = '"';
 
-  next += raw2json(src, maxLength, next);
+  next += raw2json(src, maxLength - 3, next, len);
 
   *(next++) = '"';
   *(next++) = '\0';
@@ -1401,17 +1402,17 @@ static int PrintString(const char *src, int maxLength, char *json) {
  * Converts a native string to its JSON representation.
  *
  * @param src           Pointer to the native (unescaped) string, which may contain special characters.
- * @param maxLength     The number of characters in the input string if not terminated, or &lt;=0
+ * @param maxLength     The number of characters in the input string if not terminated, or 0
  *                      if always terminated arbitrary length string.
  * @return              The JSON representation of the original string, in which special characters
  *                      appear in escaped form (without the surrounding double quotes).
  *
  * @sa xjsonUnescape()
  */
-char *xjsonEscape(const char *src, int maxLength) {
+char *xjsonEscape(const char *src, size_t maxLength) {
   static const char *fn = "xjsonEscape";
 
-  int size;
+  long size;
   char *json;
 
   if(!src) {
@@ -1419,9 +1420,11 @@ char *xjsonEscape(const char *src, int maxLength) {
     return NULL;
   }
 
-  if(maxLength <= 0) maxLength = INT_MAX;
+  if(maxLength == 0) maxLength = SIZE_MAX;
 
   size = GetJsonStringSize(src, maxLength);
+  if(size < 0)
+    return x_trace_null(fn, NULL);
 
   json = malloc(size + 1);
   if(!json) {
@@ -1429,7 +1432,7 @@ char *xjsonEscape(const char *src, int maxLength) {
     return NULL;
   }
 
-  raw2json(src, maxLength, json);
+  raw2json(src, maxLength, json, size + 1);
 
   return json;
 }
@@ -1447,7 +1450,7 @@ char *xjsonUnescape(const char *str) {
   static const char *fn = "xjsonUnescape";
 
   char *raw;
-  int l;
+  size_t l;
 
   if(!str) {
     x_error(0, EINVAL, fn, "input string is NULL");

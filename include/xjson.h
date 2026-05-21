@@ -31,7 +31,7 @@ XStructure *xjsonParseFile(FILE *file, size_t length);
 XField *xjsonParseField(const char *src, char **tail);
 void xjsonSetErrorStream(FILE *fp);
 
-char *xjsonEscape(const char *src, int maxLength);
+char *xjsonEscape(const char *src, size_t maxLength);
 char *xjsonUnescape(const char *json);
 
 #endif /* XJSON_H_ */

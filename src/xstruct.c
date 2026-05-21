@@ -53,7 +53,7 @@ XField *xCreateMixedArrayField(const char *name, int ndim, const int *sizes, XFi
 
   while(--count >= 0) {
     char idx[20];
-    snprintf(idx, sizeof(idx), ".%d", (count+1));
+    x_snprintf(idx, sizeof(idx), ".%d", (count+1));
     array[count].name = xStringCopyOf(idx);
   }
 
@@ -1522,7 +1522,7 @@ char *xGetAggregateID(const char *table, const char *key) {
     x_error(0, errno, fn, "malloc error");
     return NULL;
   }
-  snprintf(id, len, "%s" X_SEP "%s", table, key);
+  x_snprintf(id, len, "%s" X_SEP "%s", table, key);
 
   return id;
 }
