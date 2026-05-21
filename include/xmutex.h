@@ -14,7 +14,7 @@
 #  include <pthread.h>
 #  include <stdlib.h>         // for NULL
 
-#  define xmut_init(x)        pthread_mutex_init(x, NULL)  ///< initialize mutex (ignoes return value)
+#  define xmut_init(x)        pthread_mutex_init(x, NULL)  ///< initialize mutex (ignores return value)
 #  define xmut_lock           pthread_mutex_lock           ///< lock mutex
 #  define xmut_unlock         pthread_mutex_unlock         ///< unlock mutex
 #  define xmut_destroy        pthread_mutex_destroy        ///< destroy mutex

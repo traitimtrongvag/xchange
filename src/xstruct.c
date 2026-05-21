@@ -295,6 +295,8 @@ XField *xGetField(const XStructure *s, const char *id) {
     if(!next) return e;
 
     if(e->type != X_STRUCT) return NULL;
+    if(!e->value) return NULL;
+
     return xGetField((XStructure *) e->value, next);
   }
 
@@ -1303,7 +1305,7 @@ int xReduceDims(int *ndim, int *sizes) {
 
   for(i = *ndim; --i >= 0; ) if (sizes[i] == 1) {
     (*ndim)--;
-    if(i < *ndim) memmove(&sizes[i], &sizes[i+1], (*ndim - i - 1) * sizeof(int));
+    if(i < *ndim - 1) memmove(&sizes[i], &sizes[i+1], (*ndim - i - 1) * sizeof(int));
     else sizes[i] = 0;
   }
 
