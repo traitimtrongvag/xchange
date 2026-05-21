@@ -90,9 +90,11 @@ infer: clean
 .PHONY: clean
 clean:
 	@rm -f $(OBJECTS) README-xchange.md gmon.out
+	@rm -rf infer-out
 	@$(MAKE) -s -C test clean
 	@$(MAKE) -s -C examples clean
 	@$(MAKE) -s -C doc clean 
+
 
 # Remove all generated files
 .PHONY: distclean

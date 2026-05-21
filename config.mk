@@ -66,13 +66,11 @@ ifeq ($(PLATFORM),Darwin)
   SOEXT := dylib
   SHARED_FLAGS := -dynamiclib -fPIC
   SONAME_FLAG := -Wl,-install_name,@rpath/
-  LIB_PATH_VAR := DYLD_LIBRARY_PATH
 else
   # Linux/Unix specific
   SOEXT := so
   SHARED_FLAGS := -shared -fPIC
   SONAME_FLAG := -Wl,-soname,
-  LIB_PATH_VAR := LD_LIBRARY_PATH
 endif
 
 
