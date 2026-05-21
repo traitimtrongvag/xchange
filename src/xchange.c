@@ -337,7 +337,8 @@ long xGetElementCount(int ndim, const int *sizes) {
 int xPrintDimsN(char *dst, int ndim, const int *sizes, size_t len) {
   static const char *fn = "xPrintDims";
 
-  int i, n = 0;
+  int i;
+  size_t n = 0;
 
   if(!dst)
     return x_error(-1, EINVAL, fn, "'dst' is NULL");
@@ -348,10 +349,10 @@ int xPrintDimsN(char *dst, int ndim, const int *sizes, size_t len) {
   if(ndim > 0 && !sizes)
     return x_error(-1, EINVAL, fn, "input 'sizes' is NULL (ndim = %d)", ndim);
 
-  if(ndim <= 0) return snprintf(dst, len, "1");           // default, will be overwritten with actual sizes, if any.
+  if(ndim <= 0) return x_snprintf(dst, len, "1");           // default, will be overwritten with actual sizes, if any.
   else if(ndim > X_MAX_DIMS) ndim = X_MAX_DIMS;
 
-  for(i = 0; i < ndim; i++) n += snprintf(&dst[n], len - n, "%d ", sizes[i]);       // Print the next dimension
+  for(i = 0; i < ndim; i++) n += x_snprintf(&dst[n], len - n, "%d ", sizes[i]);       // Print the next dimension
 
   if(n) n--;
   dst[n] = '\0';    // Replace the last space with a string termination.
@@ -656,7 +657,7 @@ float xParseFloat(const char *str, char **tail) {
 
   errno = 0;
 
-#if ( _ISOC99_SOURCE || _POSIX_C_SOURCE >= 200112L ) && !EXPLICIT_PARSE_SPECIAL_DOUBLES
+#if ( defined(_ISOC99_SOURCE) || _POSIX_C_SOURCE >= 200112L ) && !EXPLICIT_PARSE_SPECIAL_DOUBLES
   return strtof(str, tail);
 #else
   {
@@ -704,12 +705,12 @@ int xPrintDoubleN(char *str, double value, size_t len) {
     return x_error(-1, EINVAL, fn, "'len' is zero");
 
   // For double-precision restrict range to IEEE range
-  if(value > DBL_MAX) return snprintf(str, len, "inf");
-  else if(value < -DBL_MAX) return snprintf(str, len, "-inf");
-  else if(isnan(value)) return snprintf(str, len, "nan");
-  else if(value < DBL_MIN) if(value > -DBL_MIN) return snprintf(str, len, "0");
+  if(value > DBL_MAX) return x_snprintf(str, len, "inf");
+  else if(value < -DBL_MAX) return x_snprintf(str, len, "-inf");
+  else if(isnan(value)) return x_snprintf(str, len, "nan");
+  else if(value < DBL_MIN) if(value > -DBL_MIN) return x_snprintf(str, len, "0");
 
-  return snprintf(str, len, "%.16g", value);
+  return x_snprintf(str, len, "%.16g", value);
 }
 
 /**
@@ -755,12 +756,12 @@ int xPrintFloatN(char *str, float value, size_t len) {
       return x_error(-1, EINVAL, fn, "'len' is zero");
 
   // For single-precision restrict range to IEEE range
-  if(value > FLT_MAX) return snprintf(str, len, "inf");
-  else if(value < -FLT_MAX) return snprintf(str, len, "-inf");
-  else if(isnan(value)) return snprintf(str, len, "nan");
-  else if(value < FLT_MIN) if(value > -FLT_MIN) return snprintf(str, len, "0");
+  if(value > FLT_MAX) return x_snprintf(str, len, "inf");
+  else if(value < -FLT_MAX) return x_snprintf(str, len, "-inf");
+  else if(isnan(value)) return x_snprintf(str, len, "nan");
+  else if(value < FLT_MIN) if(value > -FLT_MIN) return x_snprintf(str, len, "0");
 
-  return snprintf(str, len, "%.7g", value);
+  return x_snprintf(str, len, "%.7g", value);
 }
 
 /**
@@ -848,10 +849,9 @@ const char *xErrorDescription(int code) {
   return "unknown error";
 }
 
-#ifdef snprintf
-
+#ifdef X_SNPRINTF
 /**
- * Default snprintf implementation for older platform, which do not have it, it behaves
+ * Default x_snprintf implementation for older platform, which do not have it. It behaves
  * just like sprintf(), ignoring the len parameter altogether.
  *
  */
@@ -866,4 +866,4 @@ int x_snprintf(char *buf, size_t len, const char *fmt, ...) {
   va_end(varg);
   return n;
 }
-#endif
+#endif // X_SNPRINTF

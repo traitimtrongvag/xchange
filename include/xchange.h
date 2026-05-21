@@ -353,8 +353,14 @@ int x_warn(const char *from, const char *desc, ...);
 int x_trace(const char *loc, const char *op, int n);
 void *x_trace_null(const char *loc, const char *op);
 
-#if X_SNPRINTF || (!defined(snprintf) && !__cplusplus && !(__STDC_VERSION__ >= 200809L))
-#  define snprintf    x_snprintf      ///< Dummy snprintf() implementation, which defaults snprintf().
+// Check to see if snprintf() is available, or if we should use our own dummy version of it.
+#if !defined(X_SNPRINTF) && ( defined(snprintf) || defined(__cplusplus) || __STDC_VERSION__ >= 199901L \
+        || defined(_MSC_VER) || defined(_ISOC99_SOURCE) || _XOPEN_SOURCE >= 500 || defined(_BSD_SOURCE) )
+#  define x_snprintf    snprintf      ///< Use the builtin snprintf function
+#else
+#  ifndef X_SNPRINTF
+#    define X_SNPRINT                 ///< Use out own dummy version of snprintf() (which is the same as sprintf())
+#  endif
 
 int x_snprintf(char *buf, size_t len, const char *fmt, ...);
 #endif

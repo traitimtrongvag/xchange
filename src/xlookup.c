@@ -227,10 +227,10 @@ static int xLookupPutAllAsync(XLookupTable *tab, const char *prefix, const XStru
       count = xGetFieldCount(f);
       while(--count >= 0) {
         int n = 0;
-        if(prefix) n = snprintf(p1, plen, "%s" X_SEP, prefix);
+        if(prefix) n = x_snprintf(p1, plen, "%s" X_SEP, prefix);
 
-        if(f->ndim == 0) snprintf(&p1[n], plen - n, "%s", f->name);
-        else snprintf(&p1[n], plen - n, "%s" X_SEP "%d", f->name, (count + 1));
+        if(f->ndim == 0) x_snprintf(&p1[n], plen - n, "%s", f->name);
+        else x_snprintf(&p1[n], plen - n, "%s" X_SEP "%d", f->name, (count + 1));
 
         N += xLookupPutAllAsync(tab, p1, &sub[count], TRUE);
       }
@@ -266,10 +266,10 @@ static int xLookupRemoveAllAsync(XLookupTable *tab, const char *prefix, const XS
       count = xGetFieldCount(f);
       while(--count >= 0) {
         int n = 0;
-        if(prefix) n = snprintf(p1, plen, "%s" X_SEP, prefix);
+        if(prefix) n = x_snprintf(p1, plen, "%s" X_SEP, prefix);
 
-        if(f->ndim == 0) snprintf(&p1[n], plen - n, "%s", f->name);
-        else snprintf(&p1[n], plen - n, "%s" X_SEP "%d", f->name, (count + 1));
+        if(f->ndim == 0) x_snprintf(&p1[n], plen - n, "%s", f->name);
+        else x_snprintf(&p1[n], plen - n, "%s" X_SEP "%d", f->name, (count + 1));
 
         N += xLookupRemoveAllAsync(tab, p1, &sub[count], TRUE);
       }
