@@ -941,7 +941,7 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
       XField *nextField = e->next;
 
       // Name is . + 1-based index, e.g. ".1", ".2"...
-      x_snprintf(idx, sizeof(idx), ".%zu", (i + 1));
+      x_snprintf(idx, sizeof(idx), ".%lu", (unsigned long) (i + 1));
 
       array[i] = *e;
       array[i].name = xStringCopyOf(idx);
@@ -1460,7 +1460,7 @@ char *xjsonUnescape(const char *str) {
   l = strlen(str);
   raw = (char *) malloc(l + 1);
   if(!raw) {
-    x_error(0, errno, fn, "alloc error (%zu bytes)", (l + 1));
+    x_error(0, errno, fn, "alloc error (%llu bytes)", (long long) l + 1);
     return NULL;
   }
 
