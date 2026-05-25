@@ -728,7 +728,10 @@ static void *ParsePrimitive(char **pos, XType *type, int *lineNumber) {
 
   next = *pos = SkipSpaces(*pos, lineNumber);
 
-  for(l = 0; next[l]; l++) if(isspace(next[l]) || next[l] == ',')  break;
+  for(l = 0; next[l]; l++) {
+    char c = next[l];
+    if(isspace(c) || c == ',' || c == '}' || c == ']') break;
+  }
   *pos = &next[l];      // Consume a token not matter what...
 
   // Check for null
@@ -1384,18 +1387,18 @@ static int raw2json(const char *src, size_t maxlen, char *json, size_t len) {
 }
 
 static long PrintString(const char *src, size_t maxLength, char *json, size_t len) {
-  char *next = json;
+  size_t pos = 0;
 
   if(maxLength == 0) maxLength = SIZE_MAX;
 
-  *(next++) = '"';
+  if(len > 0) json[pos++] = '"';
 
-  next += raw2json(src, maxLength - 3, next, len);
+  if(pos < len) pos += raw2json(src, maxLength - 3, &json[pos], len);
 
-  *(next++) = '"';
-  *(next++) = '\0';
+  if(pos < len) json[pos++] = '"';
+  if(pos < len) json[pos] = '\0';
 
-  return next - json - 1;
+  return pos;
 }
 
 /**
