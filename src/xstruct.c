@@ -1294,7 +1294,6 @@ int xReduceDims(int *ndim, int *sizes) {
 
   if(*ndim < 1) return X_SUCCESS;
 
-  // FIXME This condition trips up infer...
   if(sizes == NULL) return x_error(X_SIZE_INVALID, EINVAL, fn, "sizes is NULL (ndim = %d)", *ndim);
 
   for(i = *ndim; --i >= 0; ) if (sizes[i] == 0) {
@@ -1438,7 +1437,7 @@ char *xNextIDToken(const char *id) {
 char *xCopyIDToken(const char *id) {
   const char *next;
   char *token;
-  int l;
+  size_t l;
 
   if(!id) {
     x_error(X_NULL, EINVAL, "xCopyIDToken", "input ID is NULL");
@@ -1449,10 +1448,10 @@ char *xCopyIDToken(const char *id) {
   if(!strncmp(id, X_SEP, X_SEP_LENGTH)) id += X_SEP_LENGTH;
 
   next = xNextIDToken(id);
-  if(next) l = next - id - X_SEP_LENGTH;
+  if(next) l = (next - id) - X_SEP_LENGTH;
   else l = strlen(id);
 
-  token = (char *) malloc(l+1);
+  token = (char *) malloc(l + 1);
   if(!token) {
     x_error(0, errno, "xCopyIDToken", "malloc error");
     return NULL;
