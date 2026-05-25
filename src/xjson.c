@@ -19,6 +19,7 @@
 
 #define __XCHANGE_INTERNAL_API__        ///< Use internal definitions
 #include "xjson.h"
+#include "xmutex.h"
 
 #ifndef TRUE
 #define TRUE 1          ///< Boolean 'true' in case it isn't already defined
@@ -456,10 +457,24 @@ XStructure *xjsonParseFile(FILE *fp, size_t length) {
  * @param fp    File to which to write errors or NULL to suppress errors.
  */
 void xjsonSetErrorStream(FILE *fp) {
+  // cppcheck-suppress unusedVariable
+  static xmut_type mutex;
+  static int initialized;
+
   static int local;     // If using a file opened by this call...
 
+  if(!initialized) {
+    xmut_init(&mutex);
+    initialized = 1;
+  }
+
+  xmut_lock(&mutex);
+
   if(local) {
-    if(!fp) return;
+    if(!fp) {
+      xmut_unlock(&mutex);
+      return;
+    }
     fclose(xerr);
     local = FALSE;
   }
@@ -470,6 +485,8 @@ void xjsonSetErrorStream(FILE *fp) {
   }
 
   if(fp) xerr = fp;
+
+  xmut_unlock(&mutex);
 }
 
 /**
@@ -972,7 +989,7 @@ static void *ParseArray(char **pos, XType *type, int *ndim, int sizes[X_MAX_DIMS
 
     if(*ndim >= X_MAX_DIMS) {
       Warning("[L.%d] Too many array dimensions.\n", *lineNumber);
-      return NULL;
+      goto cleanup; // @suppress("Goto statement used")
     }
 
     // Thus far sizes is the size of top-level entries
@@ -1393,7 +1410,7 @@ static long PrintString(const char *src, size_t maxLength, char *json, size_t le
 
   if(len > 0) json[pos++] = '"';
 
-  if(pos < len) pos += raw2json(src, maxLength - 3, &json[pos], len);
+  if(pos < len) pos += raw2json(src, maxLength, &json[pos], len);
 
   if(pos < len) json[pos++] = '"';
   if(pos < len) json[pos] = '\0';
