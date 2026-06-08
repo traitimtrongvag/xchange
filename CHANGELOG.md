@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+ - CMake `xchangeConfig` to skip requiting math lib for non-Windows platforms in general, since it's can fail if the 
+   math library is not in the search path, but in the build path, such as in case of some cross builds (see e.g. the
+   vcpkg Android builds)
+
 ### Added
 
  - Added `xIsDebug()` function to check on `xDebug`. While the global variable is fine in most cases, they are 
