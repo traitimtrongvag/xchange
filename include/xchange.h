@@ -234,8 +234,8 @@ typedef struct {
 extern boolean xVerbose;        ///< Switch to enable verbose console output for XChange operations.
 extern boolean xDebug;          ///< Switch to enable debugging (very verbose) output for XChange operations.
 
-#define xvprintf if(xVerbose) printf        ///< Use for generating verbose output
-#define xdprintf if(xDebug) printf          ///< Use for generating debug output
+#define xvprintf if(xIsVerbose()) printf        ///< Use for generating verbose output
+#define xdprintf if(xIsDebug()) printf          ///< Use for generating debug output
 
 // In xutil.c ------------------------------------------------>
 boolean xIsVerbose();
