@@ -24,7 +24,7 @@ endif()
 
 # Project definition
 project(${PACKAGE_NAME}
-    VERSION 1.1.2
+    VERSION 1.2.0
     DESCRIPTION "Structured data exchange and JSON support for C/C++"
     HOMEPAGE_URL "https://sigmyne.github.io/xchange/"
     LANGUAGES C

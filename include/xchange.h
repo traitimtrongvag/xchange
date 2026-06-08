@@ -3,7 +3,7 @@
  *
  * \date Mar 14, 2019
  * \author Attila Kovacs
- * @version 1.1
+ * @version 1.2
  *
  *   A Basic set of utilities to allow platform-independent structured data exchange from C/C++.
  *   It also includes a JSON parser and emitter implementation.
@@ -26,7 +26,7 @@
 #define XCHANGE_PATCHLEVEL     0
 
 /// Additional release information in version, e.g. "-1", or "-rc1".
-#define XCHANGE_RELEASE_STRING "-rc3"
+#define XCHANGE_RELEASE_STRING ""
 
 
 #ifdef str_2
