@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Added
+
+ - Added `xIsDebug()` function to check on `xDebug`. While the global variable is fine in most cases, they are 
+   problematic for Windows DLLs. It's better to use purely functional access instead.
+   
+
 ## [1.2.0] - 2026-06-08
 
 High priority bug fixes and version bump.

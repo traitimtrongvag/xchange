@@ -240,6 +240,7 @@ extern boolean xDebug;          ///< Switch to enable debugging (very verbose) o
 // In xutil.c ------------------------------------------------>
 boolean xIsVerbose();
 void xSetVerbose(boolean value);
+boolean xIsDebug();
 void xSetDebug(boolean value);
 int xError(const char *fn, int code);
 const char *xErrorDescription(int code);

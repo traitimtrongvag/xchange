@@ -129,7 +129,6 @@ int x_warn(const char *from, const char *desc, ...) {
  * @return    TRUE (1) if verbosity is enabled, or else FALSE (0).
  *
  * @sa xSetVerbose()
- * @sa xSetDebug()
  */
 boolean xIsVerbose() {
   return xVerbose;
@@ -140,10 +139,23 @@ boolean xIsVerbose() {
  *
  * @param value   TRUE (non-zero) to enable verbose output, or else FALSE (0).
  *
- * @sa xIsVerbose()
+ * @sa xIsVerbose(), xSetDebug()
  */
 void xSetVerbose(boolean value) {
   xVerbose = value ? TRUE : FALSE;
+}
+
+/**
+ * Checks if debug output is enabled
+ *
+ * @return      TRUE (1) if debug output is enabled, otherwise FALSE (0).
+ *
+ * @since 1.2.1
+ *
+ * @sa xSetDebug()
+ */
+boolean xIsDebug() {
+  return xDebug;
 }
 
 /**
@@ -151,7 +163,7 @@ void xSetVerbose(boolean value) {
  *
  * @param value   TRUE (non-zero) to enable verbose output, or else FALSE (0).
  *
- * @sa xSetVerbose()
+ * @sa xIsDebug(), xSetVerbose()
  */
 void xSetDebug(boolean value) {
   xDebug = value ? TRUE : FALSE;
