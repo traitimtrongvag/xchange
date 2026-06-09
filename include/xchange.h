@@ -168,9 +168,14 @@ typedef int XType;          ///< SMA-X data type.
  */
 typedef int XBoolean;
 
-// If not Windows/MSC (which defines a `boolean` type in `windows.h`), and _TYPEDEF_BOOLEAN wasn't explicitl defined to
-// indicate a custom definition for `boolean`, then define `boolean` to be the same a `XBoolean`.
-#if !defined(_MSC_VER) && !defined(_TYPEDEF_BOOLEAN)
+#ifdef _MSC_VER
+#  include <windows.h>           ///< definition of boolean on Windows (for compat prior to v1.3)
+#  define _TYPEDEF_BOOLEAN       ///< Use Windows definition of boolean
+#endif
+
+// If _TYPEDEF_BOOLEAN wasn't explicitly defined to indicate a custom definition for `boolean`, then define `boolean`
+// to be the same a `XBoolean`.
+#if !defined(_TYPEDEF_BOOLEAN)
 #  define _TYPEDEF_BOOLEAN         ///< Precompiler constant to indicate that we use the xchange definition of a boolean
 typedef XBoolean boolean;          ///< compatibility boolean TRUE/FALSE data type prior to v1.3. Same as XBoolean.
 #endif
