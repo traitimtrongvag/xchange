@@ -207,12 +207,12 @@ typedef struct XField {
   void *value;              ///< Pointer to designated local string content (or structure)...
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
   XType type;               ///< The underlying data type
-  char *subtype;            ///< (optional) Descriptive subtype, such a a mime type or encoding (if any). It is
+  char *subtype;            ///< (optional) Descriptive subtype, such as a mime type or encoding (if any). It is
                             ///< entirely up to the user / application to assign meaning to this field.
                             ///< NOTE: it should normally be dynamically allocated, to work with xClearField() / xDestroyField().
   int ndim;                 ///< The dimensionality of the data
   int sizes[X_MAX_DIMS];    ///< The sizes along each dimension
-  XBoolean isSerialized;     ///< Whether the fields is stored in serialized (string) format.
+  XBoolean isSerialized;    ///< Whether the field is stored in serialized (string) format.
   struct XField *next;      ///< Pointer to the next linked element (if inside an XStructure).
 } XField;
 
