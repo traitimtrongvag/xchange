@@ -203,7 +203,7 @@ more simplicity, convenience, and dependency resolution.
 
 <details>
 
-You can install just the __xchange__ libvrary with `vcpkg` as:
+You can install just the __xchange__ library with `vcpkg` as:
 
 ```bash
   $ vcpkg install xchange
